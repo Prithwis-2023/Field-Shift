@@ -254,7 +254,7 @@ A video walkthrough focused directly on the **3.5" Landscape LCD Screen** showca
 - Real-time reaction to ground probe hydration & simulated temperature extremes.
 - Live on-device NASA POWER TLS synchronization and automatic Irrigation Deficit verdict updates.
 
-*(Drop your YouTube / Vimeo link or MP4 embed here)*
+*https://fieldsshift.netlify.app/FieldShiftDemo.mp4*
 
 ---
 
