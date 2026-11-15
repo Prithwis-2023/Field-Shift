@@ -1,113 +1,153 @@
-<p align="center">
-<img src="https://images.tuyacn.com/fe-static/docs/img/c128362b-eb25-4512-b5f2-ad14aae2395c.jpg" width="100%" >
-</p>
+# 🌾 Farm Dashboard & Agro-Climatic Intelligence Station
 
 <p align="center">
-  <a href="https://tuyaopen.ai/docs/quick-start/enviroment-setup">Quick Start</a> ·
-  <a href="https://developer.tuya.com/en/docs/iot/ai-agent-management?id=Kdxr4v7uv4fud">Tuya AI Agent</a> ·
-  <a href="https://tuyaopen.ai/docs/about-tuyaopen">Documentation</a> ·
-  <a href="https://tuyaopen.ai/docs/hardware-specific/t5-ai-board/overview-t5-ai-board">Hardware Resource</a>
+  <img src="https://img.shields.io/badge/Platform-Tuya%20T5AI%20(BK7258)-blue?style=for-the-badge&logo=espressif" alt="Platform">
+  <img src="https://img.shields.io/badge/UI%20Engine-LVGL%20v8%2Fv9-green?style=for-the-badge" alt="LVGL">
+  <img src="https://img.shields.io/badge/Data%20Feed-NASA%20POWER%20API-orange?style=for-the-badge" alt="NASA POWER">
+  <img src="https://img.shields.io/badge/Display-3.5%22%20RGB565%20320x480-purple?style=for-the-badge" alt="Display">
 </p>
 
-<p align="center">
-    <a href="https://github.com/tuya/TuyaOpen/actions/workflows/check-build-apps.yml" target="_blank">
-        <img src="https://github.com/tuya/TuyaOpen/actions/workflows/check-build-apps.yml/badge.svg"
-            alt="TuyaOpen Check Build"></a>
-    <a href="https://tuyaopen.ai" target="_blank">
-        <img alt="Static Badge" src="https://img.shields.io/badge/Product-F04438"></a>
-    <a href="https://tuyaopen.ai/pricing" target="_blank">
-        <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
-    <a href="https://discord.gg/cbGrBjx7" target="_blank">
-        <img src="https://img.shields.io/badge/Discord-Join%20Chat-5462eb?logo=discord&labelColor=%235462eb&logoColor=%23f5f5f5&color=%235462eb"
-            alt="chat on Discord"></a>
-    <a href="https://www.youtube.com/@tuya2023" target="_blank">
-        <img src="https://img.shields.io/badge/YouTube-Subscribe-red?logo=youtube&labelColor=white"
-            alt="Subscribe on YouTube"></a>
-    <a href="https://x.com/tuyasmart" target="_blank">
-        <img src="https://img.shields.io/twitter/follow/tuyasmart?logo=X&color=%20%23f5f5f5"
-            alt="follow on X(Twitter)"></a>
-    <a href="https://www.linkedin.com/company/tuya-smart/" target="_blank">
-        <img src="https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff"
-            alt="follow on LinkedIn"></a>
-    <a href="https://github.com/tuya/tuyaopen/graphs/commit-activity?branch=dev" target="_blank">
-        <img alt="Commits last month (dev branch)" src="https://img.shields.io/github/commit-activity/m/tuya/tuyaopen/dev?labelColor=%2332b583&color=%2312b76a"></a>
-    <a href="https://github.com/langgenius/dify/" target="_blank">
-        <img alt="Issues closed" src="https://img.shields.io/github/issues-search?query=repo%3Atuya%2Ftuyaopen%20is%3Aclosed&label=issues%20closed&labelColor=%20%237d89b0&color=%20%235d6b98"></a>
-</p>
+An intelligent IoT agricultural monitoring station and decision-support terminal built on the **TuyaOpen** framework for the **Tuya T5AI** (Bekken BK7258 Dual-Core ARM Cortex-M33 Wi-Fi 6 SoC). 
 
-
-
-<p align="center">
-  <a href="./README.md"><img alt="README in English" src="https://img.shields.io/badge/English-d9d9d9"></a>
-  <a href="./README_zh.md"><img alt="简体中文版自述文件" src="https://img.shields.io/badge/简体中文-d9d9d9"></a>
-</p>
-
-
-## Overview
-
-TuyaOpen powers next-gen AI-agent hardware: it supports gear (Tuya T-Series WIFI/BT MCUs, Pi, ESP32s) via its flexible, cross-platform C/C++ SDK, pairs with Tuya Cloud’s low-latency multimodal AI (drag-and-drop workflows), integrates top models (ChatGPT, Gemini, Qwen, Doubao etc.), and streamlines open AI-IoT ecosystem building.
-
-![TuyaOpen One Pager](https://images.tuyacn.com/fe-static/docs/img/2eed8b23-0459-4db4-8f17-e7cce8b36b8a.png)
-
-
-### 🚀 With TuyaOpen, you can:
-- Develop hardware products featuring speech technologies such as `ASR` (Automatic Speech Recognition), `KWS` (Keyword Spotting), `TTS` (Text-to-Speech), and `STT` (Speech-to-Text)
-- Integrate with leading LLMs and AI platforms, including `Deepseek`, `ChatGPT`, `Claude`, `Gemini`, and more.
-- Build smart devices with `advanced multimodal AI capabilities`, including voice, vision, and sensor-based features
-- Create custom products and seamlessly connect them to Tuya Cloud for `remote control`, `monitoring`, and `OTA updates`
-- Develop devices compatible with `Google Home` and `Amazon Alexa`
-- Design custom `Powered by Tuya` hardware
-- Target a wide range of hardware applications using `Bluetooth`, `Wi-Fi`, `Ethernet`, and more
-- Benefit from robust built-in `security`, `device authentication`, and `data encryption`
-
-
-Whether you’re creating smart home products, industrial IoT solutions, or custom AI applications, TuyaOpen provides the tools and examples to get started quickly and scale your ideas across platforms.
-
-## System Components
-<p align="center">
-<img src="https://images.tuyacn.com/fe-static/docs/img/220c9d84-d5f1-4976-b910-b63e415e9e03.png" width="80%" >
-</p>
-
-
-### Detailed SDK Framework Stacks
-<p align="center">
-<img src="https://images.tuyacn.com/fe-static/docs/img/25713212-9840-4cf5-889c-6f55476a59f9.jpg" width="80%" >
-</p>
+The station bridges high-frequency local field telemetry (soil moisture, temperature, humidity, ambient light) with regional satellite climatology from the **NASA POWER API**. By analyzing microclimate-to-macroclimate divergence, it computes real-time irrigation deficit scoring, frost warnings, and predictive trends rendered on an interactive Studio Ghibli-themed touchscreen UI.
 
 ---
 
+## 📸 Key Features
 
-### Supported Target Platforms
-| Name                  | Support Status | Introduction                                                 | Debug log serial port |
-| --------------------- | -------------- | ------------------------------------------------------------ | --------------------- |
-| Ubuntu                | Supported      | Can be run directly on Linux hosts such as ubuntu.           |                       |
-| Tuya T2                    | Supported      | Supported Module List: [T2-U](https://developer.tuya.com/en/docs/iot/T2-U-module-datasheet?id=Kce1tncb80ldq) | Uart2/115200          |
-| Tuya T3                    | Supported      | Supported Module List: [T3-U](https://developer.tuya.com/en/docs/iot/T3-U-Module-Datasheet?id=Kdd4pzscwf0il) [T3-U-IPEX](https://developer.tuya.com/en/docs/iot/T3-U-IPEX-Module-Datasheet?id=Kdn8r7wgc24pt) [T3-2S](https://developer.tuya.com/en/docs/iot/T3-2S-Module-Datasheet?id=Ke4h1uh9ect1s) [T3-3S](https://developer.tuya.com/en/docs/iot/T3-3S-Module-Datasheet?id=Kdhkyow9fuplc) [T3-E2](https://developer.tuya.com/en/docs/iot/T3-E2-Module-Datasheet?id=Kdirs4kx3uotg) etc. | Uart1/460800          |
-| Tuya T5                  | Supported      | Supported Module List: [T5-E1](https://developer.tuya.com/en/docs/iot/T5-E1-Module-Datasheet?id=Kdar6hf0kzmfi) [T5-E1-IPEX](https://developer.tuya.com/en/docs/iot/T5-E1-IPEX-Module-Datasheet?id=Kdskxvxe835tq) etc. | Uart1/460800          |
-| ESP32/ESP32C3/ESP32S3 | Supported      |                                                              | Uart0/115200          |
-| LN882H                | Supported      |                                                              | Uart1/921600          |
-| BK7231N               | Supported      | Supported Module List:  [CBU](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)  [CB3S](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076) [CB3L](https://developer.tuya.com/en/docs/iot/cb3l-module-datasheet?id=Kai51ngmrh3qm) [CB3SE](https://developer.tuya.com/en/docs/iot/CB3SE-Module-Datasheet?id=Kanoiluul7nl2) [CB2S](https://developer.tuya.com/en/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq) [CB2L](https://developer.tuya.com/en/docs/iot/cb2l-module-datasheet?id=Kai2eku1m3pyl) [CB1S](https://developer.tuya.com/en/docs/iot/cb1s-module-datasheet?id=Kaij1abmwyjq2) [CBLC5](https://developer.tuya.com/en/docs/iot/cblc5-module-datasheet?id=Ka07iqyusq1wm) [CBLC9](https://developer.tuya.com/en/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) [CB8P](https://developer.tuya.com/en/docs/iot/cb8p-module-datasheet?id=Kahvig14r1yk9) etc. | Uart2/115200          |
+* **Dual-Tier Agro Telemetry**:
+  * **Local Edge Sensors**: Soil moisture (2-point calibrated), Air Temperature, Relative Humidity, Ambient Light (Lux).
+  * **Macro Satellite Ingestion**: Live regional surface & root-zone soil wetness, 1-day and 7-day cumulative precipitation, and regional minimum temperatures fetched asynchronously via HTTPS from NASA POWER.
+* **Agronomic Intelligence Engine (`fs_insight`)**:
+  * **Soil Moisture Gap**: Compares local field moisture against macro regional benchmarks to detect localized drying or over-irrigation.
+  * **Microclimate Temperature Gap**: Identifies sheltered frost pockets and greenhouse heat-islands.
+  * **Irrigation Need Index (0–100)**: Multi-factor composite index combining root-zone moisture, evapotranspiration indicators, and recent rainfall offset.
+  * **Pearson Correlation ($r$)**: Live tracking of local micro-trends against regional weather movement.
+* **Industrial-Grade Alarm Engine (`fs_alarm`)**:
+  * Multi-level threshold rules with hysteresis debouncing and configurable hold time.
+  * Latching alerts for critical events (Frost Warning, Heat Stress, Low Soil Moisture).
+  * Watchdog detection for stale or missing sensor nodes.
+* **Rich Touchscreen UI (`LVGL`)**:
+  * 3-page interactive swipe TileView:
+    1. **Live Dashboard**: Real-time sensor cards, alert banner, and animated Ghibli agrarian artwork.
+    2. **Telemetry Sparklines & Forecast**: 96-point dual ring buffers (8-min short / 96-min long trends) with 24-step forecast projection.
+    3. **Macro Insights Panel**: Regional divergence metrics, crop health indicators, and irrigation recommendations.
 
-# Documentation
+---
 
-For more TuyaOpen-related documentation, please refer to the [TuyaOpen Developer Guide](https://tuyaopen.ai/docs/about-tuyaopen).
+## 🛠️ Hardware Requirements
 
-## License
+| Component | Description |
+|---|---|
+| **SoC / Development Board** | Tuya T5AI Board (Bekken BK7258 Dual-Core ARM Cortex-M33, Wi-Fi 6, BLE 5.4, PSRAM) |
+| **Display Panel** | 3.5" RGB565 LCD (320 × 480 capacitive/resistive touch) |
+| **Soil Sensor** | Analog Capacitive / Resistive Soil Moisture Sensor (connected to ADC) |
+| **Environmental Sensor** | I2C / 1-Wire Air Temp & Humidity Sensor (e.g. SHT3x, AHT20, DHT22) |
+| **Light Sensor** | Ambient Light Sensor (ADC or I2C BH1750) |
 
-Distributed under the Apache License Version 2.0. For more information, see `LICENSE`.
+---
 
-## Contribute Code
+## 📐 System Architecture
 
-If you are interested in the TuyaOpen and wish to contribute to its development and become a code contributor, please first read the [Contribution Guide](https://tuyaopen.ai/docs/contribute/contribute-guide).
+```mermaid
+flowchart TD
+    subgraph SENSORS ["Local Edge Layer"]
+        A1[Soil Moisture ADC] --> CAL[2-Point Calibration Engine]
+        A2[Air Temp & Humidity] --> QC[Quality & Validation Filter]
+        A3[Ambient Lux] --> QC
+        CAL --> QC
+    end
 
-## Disclaimer and Liability Clause
+    subgraph CLOUD ["Regional Macro Layer"]
+        NET[Wi-Fi & TLS Network Task] -->|HTTPS REST| NASA[(NASA POWER API)]
+        NASA -->|Soil, Root Zone, Rain 7d, Min Temp| PARSER[JSON Agro Parser]
+    end
 
-Users should be clearly aware that this project may contain submodules developed by third parties. These submodules may be updated independently of this project. Considering that the frequency of updates for these submodules is uncontrollable, this project cannot guarantee that these submodules are always the latest version. Therefore, if users encounter problems related to submodules when using this project, it is recommended to update them as needed or submit an issue to this project.
+    subgraph CORE ["Field Framework Core (fs_core)"]
+        QC --> RING[Dual Ring Buffers\nShort 8m / Long 96m]
+        PARSER --> RING
+        RING --> INSIGHT[Agronomic Insights Engine\n- Soil & Temp Gap\n- Pearson Correlation r\n- Irrigation Index]
+        RING --> ALARM[Alarm & Rule Engine\nHysteresis & Latching]
+    end
 
-If users decide to use this project for commercial purposes, they should fully recognize the potential functional and security risks involved. In this case, users should bear all responsibility for any functional and security issues, perform comprehensive functional and safety tests to ensure that it meets specific business needs. Our company does not accept any liability for direct, indirect, special, incidental, or punitive damages caused by the user's use of this project or its submodules.
+    subgraph UI ["Display & Interaction (LVGL)"]
+        INSIGHT --> UI_PAGE[LVGL TileView Interface]
+        ALARM --> BANNER[Top Severity Alert Banner]
+        RING --> CHARTS[Historical Charts & 24-Step Forecast]
+        UI_PAGE --> LCD[3.5'' 320x480 LCD Screen]
+    end
+```
 
-## Related Links
+---
 
-- Arduino for TuyaOpen: [https://github.com/tuya/arduino-TuyaOpen](https://github.com/tuya/arduino-TuyaOpen)
-- Luanode for tuyaopen：[https://github.com/tuya/luanode-TuyaOpen](https://github.com/tuya/luanode-TuyaOpen)
-- **TuyaOpen Dev Skills** (Cursor AI workflows: env, build, flash, device auth, etc.): [github.com/tuya/TuyaOpen-dev-skills](https://github.com/tuya/TuyaOpen-dev-skills) — import as a remote rule or clone: `https://github.com/tuya/TuyaOpen-dev-skills.git`
+## 🚀 Getting Started
+
+### 1. Prerequisites
+Follow the TuyaOpen host environment setup:
+```bash
+# Clone the repository
+git clone https://github.com/Prithwis-2023/TuyaOpen.git
+cd TuyaOpen
+
+# Initialize Python venv and host tools
+. ./export.sh
+```
+
+### 2. Configure Credentials
+Copy the example secrets file and configure your Wi-Fi and location coordinates:
+```bash
+cp apps/farm_dashboard/src/fs_secrets.h.example apps/farm_dashboard/src/fs_secrets.h
+```
+Edit `apps/farm_dashboard/src/fs_secrets.h`:
+```c
+#define FS_WIFI_SSID      "Your_WiFi_SSID"
+#define FS_WIFI_PSWD      "Your_WiFi_Password"
+#define FS_SITE_LAT       "37.5508"    /* Field Latitude  */
+#define FS_SITE_LON       "127.0739"   /* Field Longitude */
+#define FS_START_DATE_YMD "20261115"   /* Current date    */
+```
+
+### 3. Build & Flash
+Navigate to the project folder and build the binary using `tos.py`:
+```bash
+cd apps/farm_dashboard
+tos.py check
+tos.py build
+```
+Binaries will be generated under:
+`apps/farm_dashboard/dist/farm_dashboard_1.0.0/`
+
+Flash to the T5AI board using TuyaOpen's flashing tool or `tos.py flash`.
+
+---
+
+## 📂 Repository Structure
+
+```text
+TuyaOpen/
+├── apps/
+│   └── farm_dashboard/            # Main project application
+│       ├── CMakeLists.txt         # Build recipe
+│       ├── app_default.config     # Target board & LVGL config
+│       ├── config/                # Board-specific configurations
+│       └── src/
+│           ├── main.c             # System entrypoint & task init
+│           ├── fs_core.c/.h       # Telemetry pipeline, ring buffers & calibration
+│           ├── fs_alarm.c/.h      # Rule engine, hysteresis & alarm states
+│           ├── fs_net.c/.h        # Wi-Fi link, TLS & NASA POWER client
+│           ├── fs_insight.c/.h    # Irrigation index & microclimate analysis
+│           ├── fs_ui.c/.h         # LVGL 3-page tile view & dashboard cards
+│           ├── fs_ui_insight.c/.h # Agronomic insight visualizer
+│           ├── ghibli_bg.c        # Agrarian background graphic assets
+│           └── leaf_sprite.c      # Animated UI sprites
+├── boards/T5AI/                   # Hardware board support & LCD driver configs
+└── platform/                      # TuyaOpen platform abstraction layer
+```
+
+---
+
+## 📜 Acknowledgements & License
+
+- Built on top of the [TuyaOpen](https://github.com/tuya/TuyaOpen) IoT SDK (Apache-2.0 License).
+- Regional meteorological data provided courtesy of NASA's [POWER Project](https://power.larc.nasa.gov/).
+- GUI powered by [LVGL](https://lvgl.io/).
