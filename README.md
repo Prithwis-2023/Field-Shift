@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://prithwis-2023.github.io/TuyaOpen/"><img src="https://img.shields.io/badge/Live%20Demo-Interactive%20LCD%20Simulator-10b981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo"></a>
+  <a href="https://fieldsshift.netlify.app/"><img src="https://img.shields.io/badge/Live%20Demo-Interactive%20LCD%20Simulator-10b981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo"></a>
   <a href="https://fieldsshift.netlify.app/FieldShiftDemo.mp4"><img src="https://img.shields.io/badge/Demo%20Video-3.5%22%20LCD%20Screen-f59e0b?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video"></a>
 </p>
 
