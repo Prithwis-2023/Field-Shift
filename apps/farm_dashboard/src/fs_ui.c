@@ -413,6 +413,12 @@ void fs_ui_build(void)
     for (int i = 0; i < fs_count() && i < UI_MAX; i++) {
         sg_panel[i] = make_panel(cont, fs_def(i)->label, &sg_val[i]);
         lv_obj_add_event_cb(sg_panel[i], panel_click_cb, LV_EVENT_CLICKED, (void *)(intptr_t)i);
+        if (fs_def(i)->simulated) {
+            lv_obj_t *tag = lv_label_create(sg_panel[i]);
+            lv_label_set_text(tag, "SIM");
+            lv_obj_set_style_text_color(tag, lv_color_hex(0xB26A00), 0);
+            lv_obj_align(tag, LV_ALIGN_TOP_RIGHT, 0, 0);
+        }
     }
 
     build_graph_tile(sg_tile_graph);

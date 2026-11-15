@@ -42,6 +42,7 @@ typedef struct {
     int       (*read)(float *raw);       /* returns 0 on success                 */
     const fs_rule_def_t *rules;
     uint8_t     n_rules;
+    bool        simulated;   /* value comes from a simulator, not a real sensor */
 } fs_sensor_t;
 
 /* two-point calibration helpers for static initialisers */
@@ -63,6 +64,7 @@ uint32_t fs_hist_period_ms(fs_hist_t which);
 const fs_sensor_t *fs_def(int ch);
 int  fs_count(void);
 int  fs_find(const char *key);
+int  fs_sim_count(void);                      /* number of simulated rows */
 
 /* each scenario profile implements these */
 const fs_sensor_t *fs_profile_sensors(int *count);

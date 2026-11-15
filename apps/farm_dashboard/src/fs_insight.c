@@ -5,14 +5,19 @@
 
 /* ---- tunable constants (placeholders: set per crop) ---- */
 #define TARGET_PCT        50.0f
-#define RAIN_FULL_MM      10.0f
+#define RAIN_FULL_MM      10.0f     /* last-day rain that fully offsets need (fallback)  */
+#define RAIN7_FULL_MM     25.0f     /* 7-day rain that fully offsets need                */
 #define RAIN_WEIGHT       0.8f
-#define REGION_DRY_PCT    30.0f
-#define REGION_DRY_BOOST  1.15f
+#define ROOT_WET_PCT      60.0f
+#define ROOT_DRY_PCT      25.0f
+#define ROOT_WET_FACTOR   0.7f
+#define ROOT_DRY_FACTOR   1.15f
+#define REGION_DRY_PCT    30.0f     /* used only when root-zone data is missing */
 #define PAIRS_MAX         16
 #define MIN_PAIRS         4
 
-static int sg_soil = -2, sg_macro, sg_rain, sg_irr;
+static int  sg_soil, sg_macro, sg_root, sg_rain, sg_rain7, sg_airt, sg_rt2m, sg_irr;
+static volatile bool sg_bound;
 
 static char sg_source[64] = "SIMULATED (mock)";
 const char *ins_source(void) { return sg_source; }
@@ -26,11 +31,16 @@ static int   sg_acc_n;
 
 static void bind(void)
 {
-    if (sg_soil != -2) return;
+    if (sg_bound) return;
     sg_soil  = fs_find("soil");
     sg_macro = fs_find("macro");
+    sg_root  = fs_find("root");
     sg_rain  = fs_find("rain");
+    sg_rain7 = fs_find("rain7");
+    sg_airt  = fs_find("airt");
+    sg_rt2m  = fs_find("rt2m");
     sg_irr   = fs_find("irr");
+    sg_bound = true;                /* set last, so no other task sees half-bound indexes */
 }
 
 static bool get_ok(int ch, float *v, uint32_t *t)
@@ -55,6 +65,15 @@ int ins_read_gap(float *raw)
     bind();
     if (!get_ok(sg_soil, &l, NULL) || !get_ok(sg_macro, &m, NULL)) return -1;
     *raw = l - m;
+    return 0;
+}
+
+int ins_read_tgap(float *raw)
+{
+    float l, r;
+    bind();
+    if (!get_ok(sg_airt, &l, NULL) || !get_ok(sg_rt2m, &r, NULL)) return -1;
+    *raw = l - r;
     return 0;
 }
 
@@ -95,8 +114,7 @@ int ins_read_corr(float *raw)
     if (sxx < 1e-4f || syy < 1e-4f) return -1;   /* no variation: correlation undefined */
 
     float den = sxx * syy;
-    /* sqrt without libm: Newton iterations are plenty for this */
-    float r = den;
+    float r = den;                               /* sqrt by Newton iteration, no libm */
     for (int k = 0; k < 12; k++) r = 0.5f * (r + den / (r > 1e-9f ? r : 1e-9f));
     *raw = clampf(sxy / (r > 1e-9f ? r : 1e-9f), -1.0f, 1.0f);
     return 0;
@@ -104,16 +122,26 @@ int ins_read_corr(float *raw)
 
 int ins_read_irr(float *raw)
 {
-    float l, m = 100.0f, rain = 0.0f;
+    float soil, rain7 = 0.0f, rain = 0.0f, root = 0.0f, macro = 0.0f;
     bind();
-    if (!get_ok(sg_soil, &l, NULL)) return -1;
-    (void)get_ok(sg_rain, &rain, NULL);
-    bool have_macro = get_ok(sg_macro, &m, NULL);
+    if (!get_ok(sg_soil, &soil, NULL)) return -1;
+    bool have_r7    = get_ok(sg_rain7, &rain7, NULL);
+    bool have_r     = get_ok(sg_rain, &rain, NULL);
+    bool have_root  = get_ok(sg_root, &root, NULL);
+    bool have_macro = get_ok(sg_macro, &macro, NULL);
 
-    float base = clampf((TARGET_PCT - l) / TARGET_PCT, 0.0f, 1.0f);
-    float disc = clampf(rain / RAIN_FULL_MM, 0.0f, 1.0f);
+    float base = clampf((TARGET_PCT - soil) / TARGET_PCT, 0.0f, 1.0f);
+    float disc = 0.0f;
+    if (have_r7)     disc = clampf(rain7 / RAIN7_FULL_MM, 0.0f, 1.0f);
+    else if (have_r) disc = clampf(rain / RAIN_FULL_MM, 0.0f, 1.0f);
     float idx = 100.0f * base * (1.0f - RAIN_WEIGHT * disc);
-    if (have_macro && m < REGION_DRY_PCT) idx *= REGION_DRY_BOOST;
+
+    if (have_root) {
+        if (root >= ROOT_WET_PCT)      idx *= ROOT_WET_FACTOR;
+        else if (root < ROOT_DRY_PCT)  idx *= ROOT_DRY_FACTOR;
+    } else if (have_macro && macro < REGION_DRY_PCT) {
+        idx *= ROOT_DRY_FACTOR;
+    }
     *raw = clampf(idx, 0.0f, 100.0f);
     return 0;
 }
@@ -130,15 +158,17 @@ const char *ins_level_text(int level)
 
 int ins_verdict(char *reason, int n)
 {
-    float idx, l = 0.0f, rain = 0.0f;
+    float idx, soil = 0.0f, r7 = 0.0f, r1 = 0.0f;
     bind();
-    if (!get_ok(sg_irr, &idx, NULL) || !get_ok(sg_soil, &l, NULL)) {
+    if (!get_ok(sg_irr, &idx, NULL) || !get_ok(sg_soil, &soil, NULL)) {
         snprintf(reason, (size_t)n, "collecting data...");
         return 0;
     }
-    (void)get_ok(sg_rain, &rain, NULL);
-    snprintf(reason, (size_t)n, "Soil %d%% vs target %d%%, rain %d mm",
-             (int)(l + 0.5f), (int)TARGET_PCT, (int)(rain + 0.5f));
+    bool h7 = get_ok(sg_rain7, &r7, NULL);
+    (void)get_ok(sg_rain, &r1, NULL);
+    float rr = h7 ? r7 : r1;
+    snprintf(reason, (size_t)n, "Soil %d%% vs target %d%%, %s %d mm",
+             (int)(soil + 0.5f), (int)TARGET_PCT, h7 ? "rain 7 d" : "rain", (int)(rr + 0.5f));
     if (idx >= 70.0f) return 3;
     if (idx >= 40.0f) return 2;
     return 1;

@@ -1,23 +1,29 @@
 #include "fs_core.h"
 #include "fs_insight.h"
 #include "fs_net.h"
-
-/* 1 = real NASA POWER feed, 0 = simulated regional data */
-#define USE_LIVE_MACRO 1
-#if USE_LIVE_MACRO
-#define MACRO_TIMING .max_age_ms = 28800000u, .lost_ms = 86400000u, .poll_ms = 0,
-#define MACRO_READ   NULL
-#define RAIN_READ    NULL
-#define CORR_LOST_MS 86400000u
-#else
-#define MACRO_TIMING .max_age_ms = 90000, .lost_ms = 300000, .poll_ms = 20000,
-#define MACRO_READ   mock_macro
-#define RAIN_READ    mock_rain
-#define CORR_LOST_MS 300000
-#endif
 #include "tal_api.h"
 
 #define N_OF(a) ((uint8_t)(sizeof(a) / sizeof((a)[0])))
+
+/* 1 = real NASA POWER feed, 0 = simulated regional data (macro and rain only) */
+#define USE_LIVE_MACRO 1
+
+/* 1 = that group of local sensors is still a simulator (shown as SIM on screen).
+   Set SIM_SOIL to 0 when the soil row gets a real driver, SIM_ENV for air/humidity/light. */
+#define SIM_SOIL 1
+#define SIM_ENV  1
+
+#if USE_LIVE_MACRO
+#define MACRO_TIMING    .max_age_ms = 28800000u, .lost_ms = 86400000u, .poll_ms = 0,
+#define MACRO_READ      NULL
+#define RAIN_READ       NULL
+#define DERIVED_LOST_MS 86400000u
+#else
+#define MACRO_TIMING    .max_age_ms = 90000, .lost_ms = 300000, .poll_ms = 20000,
+#define MACRO_READ      mock_macro
+#define RAIN_READ       mock_rain
+#define DERIVED_LOST_MS 300000
+#endif
 
 static uint32_t secs(void) { return (uint32_t)(tal_system_get_millisecond() / 1000); }
 
@@ -42,10 +48,9 @@ static int read_airt(float *raw) { *raw = -4.0f + 44.0f * tri(secs(), 600); retu
 static int read_hum(float *raw)  { *raw = 40.0f + 40.0f * tri(secs(), 150); return 0; }
 static int read_lux(float *raw)  { *raw = 60000.0f * tri(secs(), 240);      return 0; }
 
-/* ---- SIMULATED REGIONAL feed: the network task replaces these two later ---- */
+/* ---- simulated REGIONAL feed, used only when USE_LIVE_MACRO is 0 ---- */
 static int __attribute__((unused)) mock_macro(float *raw)
 {
-    /* tracks the same wetness curve with a lag and an offset, so correlation is high */
     *raw = 30.0f + 0.6f * (15.0f + 50.0f * tri(secs() + 210u, 240));
     return 0;
 }
@@ -69,49 +74,83 @@ static const fs_rule_def_t gap_rules[] = {
 static const fs_rule_def_t irr_rules[] = {
     { 3002, "IRRIGATION NEED HIGH", FS_CMP_ABOVE, 50.0f, 5.0f, 15000, FS_SEV_CAUTION, false },
 };
+#if USE_LIVE_MACRO
+static const fs_rule_def_t rtmin_rules[] = {
+    { 3003, "FROST IN REGION (LAST DAY)", FS_CMP_BELOW, 2.0f, 1.0f, 0, FS_SEV_CAUTION, false },
+};
+#endif
 
 /* ---- the sensor table: one row per channel (local, regional or derived) ---- */
 static const fs_sensor_t sg_sensors[] = {
-    { .key = "soil", .label = "Local Soil", .unit = "%",
+    { .key = "soil", .label = "Local Soil", .unit = "%", .simulated = SIM_SOIL,
       .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 1,
       .cal_scale  = FS_CAL2_SCALE(3000.0f, 0.0f, 1000.0f, 100.0f),
       .cal_offset = FS_CAL2_OFFSET(3000.0f, 0.0f, 1000.0f, 100.0f),
       .max_age_ms = 10000, .poll_ms = 500, .read = read_soil,
       .rules = soil_rules, .n_rules = N_OF(soil_rules) },
 
-    { .key = "airt", .label = "Air Temp", .unit = "C",
+    { .key = "airt", .label = "Air Temp", .unit = "C", .simulated = SIM_ENV,
       .min_valid = -40.0f, .max_valid = 80.0f, .decimals = 1,
       .max_age_ms = 10000, .poll_ms = 1000, .read = read_airt,
       .rules = airt_rules, .n_rules = N_OF(airt_rules) },
 
-    { .key = "hum", .label = "Humidity", .unit = "%",
+    { .key = "hum", .label = "Humidity", .unit = "%", .simulated = SIM_ENV,
       .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 0,
       .max_age_ms = 10000, .poll_ms = 1000, .read = read_hum },
 
-    { .key = "lux", .label = "Light", .unit = "lx",
+    { .key = "lux", .label = "Light", .unit = "lx", .simulated = SIM_ENV,
       .min_valid = 0.0f, .max_valid = 120000.0f, .decimals = 0,
       .max_age_ms = 10000, .poll_ms = 1000, .read = read_lux },
 
-    /* regional (mock for now) */
+    /* regional: NASA POWER (published by the fs_net task) or the mock */
     { .key = "macro", .label = "Regional Soil", .unit = "%",
       .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 0,
       MACRO_TIMING .read = MACRO_READ },
 
     { .key = "rain", .label = "Rain/day", .unit = "mm",
-      .min_valid = 0.0f, .max_valid = 200.0f, .decimals = 0,
+      .min_valid = 0.0f, .max_valid = 200.0f, .decimals = 1,
       MACRO_TIMING .read = RAIN_READ },
 
+#if USE_LIVE_MACRO
+    { .key = "root", .label = "Root Zone", .unit = "%",
+      .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 0,
+      MACRO_TIMING .read = NULL },
+
+    { .key = "rain7", .label = "Rain 7d", .unit = "mm",
+      .min_valid = 0.0f, .max_valid = 1000.0f, .decimals = 1,
+      MACRO_TIMING .read = NULL },
+
+    { .key = "rt2m", .label = "Regional Temp", .unit = "C",
+      .min_valid = -60.0f, .max_valid = 70.0f, .decimals = 1,
+      MACRO_TIMING .read = NULL },
+
+    { .key = "rtmin", .label = "Regional Min T", .unit = "C",
+      .min_valid = -60.0f, .max_valid = 70.0f, .decimals = 1,
+      MACRO_TIMING .read = NULL,
+      .rules = rtmin_rules, .n_rules = N_OF(rtmin_rules) },
+
+    { .key = "rh", .label = "Regional RH", .unit = "%",
+      .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 0,
+      MACRO_TIMING .read = NULL },
+#endif
+
     /* derived: computed from other channels by fs_insight.c */
-    { .key = "gap", .label = "Soil Gap", .unit = "pts",
+    { .key = "gap", .label = "Soil Gap", .unit = "pts", .simulated = SIM_SOIL,
       .min_valid = -100.0f, .max_valid = 100.0f, .decimals = 0,
-      .max_age_ms = 20000, .lost_ms = 300000, .poll_ms = 5000, .read = ins_read_gap,
+      .max_age_ms = 20000, .lost_ms = DERIVED_LOST_MS, .poll_ms = 5000, .read = ins_read_gap,
       .rules = gap_rules, .n_rules = N_OF(gap_rules) },
 
-    { .key = "corr", .label = "Correlation", .unit = "r",
-      .min_valid = -1.0f, .max_valid = 1.0f, .decimals = 2,
-      .max_age_ms = 30000, .lost_ms = CORR_LOST_MS, .poll_ms = 5000, .read = ins_read_corr },
+#if USE_LIVE_MACRO
+    { .key = "tgap", .label = "Temp Gap", .unit = "C", .simulated = SIM_ENV,
+      .min_valid = -60.0f, .max_valid = 60.0f, .decimals = 1,
+      .max_age_ms = 20000, .lost_ms = DERIVED_LOST_MS, .poll_ms = 5000, .read = ins_read_tgap },
+#endif
 
-    { .key = "irr", .label = "Irrigation Need", .unit = "/100",
+    { .key = "corr", .label = "Correlation", .unit = "r", .simulated = SIM_SOIL,
+      .min_valid = -1.0f, .max_valid = 1.0f, .decimals = 2,
+      .max_age_ms = 30000, .lost_ms = DERIVED_LOST_MS, .poll_ms = 5000, .read = ins_read_corr },
+
+    { .key = "irr", .label = "Irrigation Need", .unit = "/100", .simulated = SIM_SOIL,
       .min_valid = 0.0f, .max_valid = 100.0f, .decimals = 0,
       .max_age_ms = 20000, .lost_ms = 300000, .poll_ms = 5000, .read = ins_read_irr,
       .rules = irr_rules, .n_rules = N_OF(irr_rules) },

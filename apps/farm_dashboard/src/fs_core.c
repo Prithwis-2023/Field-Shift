@@ -172,3 +172,12 @@ int fs_start(void)
     cfg.thrdname   = "fs_poll";
     return (tal_thread_create_and_start(&h, NULL, NULL, poll_task, NULL, &cfg) == OPRT_OK) ? 0 : -1;
 }
+
+int fs_sim_count(void)
+{
+    int n = 0;
+    for (int i = 0; i < sg_n; i++) {
+        if (sg_s[i].simulated) n++;
+    }
+    return n;
+}
