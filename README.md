@@ -10,12 +10,12 @@
 
 <p align="center">
   <a href="https://prithwis-2023.github.io/TuyaOpen/"><img src="https://img.shields.io/badge/Live%20Demo-Interactive%20LCD%20Simulator-10b981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo"></a>
-  <a href="#-hardware-demonstration-video"><img src="https://img.shields.io/badge/Demo%20Video-3.5%22%20LCD%20Screen-f59e0b?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video"></a>
+  <a href="https://fieldsshift.netlify.app/FieldShiftDemo.mp4"><img src="https://img.shields.io/badge/Demo%20Video-3.5%22%20LCD%20Screen-f59e0b?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video"></a>
 </p>
 
 > **Bridging Satellite Climatology & In-Situ Soil Telemetry at the Farm Gate.**  
 > An autonomous, low-power edge intelligence console running on the **Tuya T5AI** (Beken BK7258 Dual-Core ARM Cortex-M33 Wi-Fi 6 SoC) and **TuyaOpen** framework.  
-> 🌐 **Interactive Demo & Virtual LCD**: [Launch Live Website](https://prithwis-2023.github.io/TuyaOpen/) (source in [`docs/index.html`](docs/index.html)).
+> 🌐 **Interactive Demo & Virtual LCD**: [Launch Live Website](https://fieldsshift.netlify.app/) (source in [`docs/index.html`](docs/index.html)).
 
 ---
 
