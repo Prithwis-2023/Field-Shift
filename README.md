@@ -336,3 +336,4 @@ python -m serial.tools.miniterm /dev/ttyACM1 460800
 - Global meteorological data courtesy of the **[NASA POWER Project](https://power.larc.nasa.gov/)** (Prediction Of Worldwide Energy Resources).
 - Embedded graphical user interface powered by **[LVGL](https://lvgl.io/)**.
 - Dedicated to sustainable, data-driven agriculture and community resilience.
+- Developed by **Alizade Adalat** and **Das Prithwis**
