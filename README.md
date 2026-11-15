@@ -8,8 +8,14 @@
   <img src="https://img.shields.io/badge/Display-3.5%22%20Landscape%20480x320-6a1b9a?style=for-the-badge" alt="Display">
 </p>
 
+<p align="center">
+  <a href="https://prithwis-2023.github.io/TuyaOpen/"><img src="https://img.shields.io/badge/Live%20Demo-Interactive%20LCD%20Simulator-10b981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Live Demo"></a>
+  <a href="#-hardware-demonstration-video"><img src="https://img.shields.io/badge/Demo%20Video-3.5%22%20LCD%20Screen-f59e0b?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video"></a>
+</p>
+
 > **Bridging Satellite Climatology & In-Situ Soil Telemetry at the Farm Gate.**  
-> An autonomous, low-power edge intelligence console running on the **Tuya T5AI** (Beken BK7258 Dual-Core ARM Cortex-M33 Wi-Fi 6 SoC) and **TuyaOpen** framework.
+> An autonomous, low-power edge intelligence console running on the **Tuya T5AI** (Beken BK7258 Dual-Core ARM Cortex-M33 Wi-Fi 6 SoC) and **TuyaOpen** framework.  
+> 🌐 **Interactive Demo & Virtual LCD**: [Launch Live Website](https://prithwis-2023.github.io/TuyaOpen/) (source in [`docs/index.html`](docs/index.html)).
 
 ---
 
@@ -237,6 +243,18 @@ Industrial IoT dashboards are notorious for harsh black backgrounds, fluorescent
   - **Tile 0 (Dashboard)**: 4 live telemetry cards (Soil Moisture, Air Temp, Humidity, Light) with unit badges, quality indicators, and top alarm banner.
   - **Tile 1 (Moisture & Forecast Chart)**: Full historical curve, Damped Holt 24-step projection, and regional baseline overlay.
   - **Tile 2 (Field Insights & Agronomy)**: Macro Soil Gap, Temperature Gap, Root-Zone reserve, 7-day cumulative rainfall, Pearson correlation indicator, and prominent Irrigation Verdict banner.
+
+---
+
+## 📺 Hardware Demonstration Video
+
+A video walkthrough focused directly on the **3.5" Landscape LCD Screen** showcasing:
+- The Studio Ghibli-themed agrarian artwork & animated leaf sprite.
+- Responsive 3-tile swipe navigation on the Goodix I2C capacitive touch display.
+- Real-time reaction to ground probe hydration & simulated temperature extremes.
+- Live on-device NASA POWER TLS synchronization and automatic Irrigation Deficit verdict updates.
+
+*(Drop your YouTube / Vimeo link or MP4 embed here)*
 
 ---
 
