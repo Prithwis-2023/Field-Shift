@@ -27,33 +27,140 @@ Modern agriculture suffers from a fundamental disconnect between two scales of o
 ### The Field Shift Solution
 **Field Shift** is a self-contained edge device installed directly at the farm gate. It connects over local Wi-Fi to pull open satellite agro-meteorology from the **NASA POWER API** via HTTPS, compares it in real time against **in-situ root and microclimate sensors**, calculates micro-macro divergence, computes on-device irrigation recommendations and frost risks, and presents actionable insights through an organic, Studio Ghibli-inspired touchscreen interface.
 
+## 📐 Detailed System Architecture
+
+Field Shift is designed as an asynchronous, multi-tasking edge operating pipeline running on FreeRTOS across the Beken BK7258 Dual-Core ARM Cortex-M33 architecture. Telemetry channels, analytics engines, network synchronization, and graphical rendering run in decoupled threads communicating via thread-safe buffers, mutexes, and event flags.
+
+```mermaid
+flowchart TD
+    subgraph INGEST ["1. Telemetry Ingestion Layer (Concurrent Producers)"]
+        ADC["Capacitive Soil Probe\n(ADC Analog Counts)"] -->|Raw Counts| CAL["2-Point Calibration\n(Scale + Offset)"]
+        DHT["Air Temp & Humidity\n(GPIO One-Wire / I2C)"] -->|Raw Values| VAL1["Boundary & Quality Filter\n(Range / NaN Check)"]
+        LUX["Ambient Light Sensor\n(I2C / ADC)"] -->|Raw Lux| VAL1
+        CAL --> VAL1
+
+        WIFI["Tuya Netmgr\n(Station Wi-Fi 6)"] --> TLS["Embedded TLS Client\n(IoT DNS + CA Certs)"]
+        TLS -->|HTTP GET Request| NASA["NASA POWER API\n(power.larc.nasa.gov)"]
+        NASA -->|Chunked ~2.2 KB JSON| PARSER["Streaming JSON Parser\n(Zero-Heap Buffer)"]
+        NASA -->|HTTP Date Header| CLK["Zero-NTP Clock Sync\n(fs_time_set)"]
+        PARSER --> VAL2["Regional Metric Validator\n(Sliding 14-Day Window)"]
+    end
+
+    subgraph CORE ["2. Unified Telemetry Engine (fs_core)"]
+        VAL1 -->|fs_publish| SLOTS["16-Channel Mutexed Slot Array\n(sg_slot[FS_MAX_CHANNELS])"]
+        VAL2 -->|fs_publish| SLOTS
+        MOCK["Synthetic Regional Fallback\n(Mock Mode Engine)"] -.->|Fallback When Offline| SLOTS
+
+        SLOTS --> Q16["Q16 Fixed-Point Normalizer\n(Zero Memory Fragmentation)"]
+        Q16 --> RING_S["Short Ring Buffer\n(96 pts @ 5s = 8 min)"]
+        Q16 --> RING_L["Long Ring Buffer\n(96 pts @ 60s = 96 min)"]
+    end
+
+    subgraph ANALYTICS ["3. Edge Intelligence & Analytics (Concurrent Tasks)"]
+        SLOTS -->|Every 5000 ms| INSIGHT["Agronomic Insights Engine (fs_insight)\n- Soil Moisture Gap\n- Temperature Micro-Gap\n- Pearson Correlation Buffer (16 pairs)\n- Multi-Factor Irrigation Need Index (0-100)"]
+        INSIGHT -->|Publish Derived Chans| SLOTS
+
+        RING_S -->|Sample History| HOLT["Damped Holt Forecast Engine (fs_forecast)\n- Level & Trend Smoothing (alpha=0.4, beta=0.2)\n- Trend Damping (phi=0.97)\n- 24-Step Extrapolation & Threshold Crossing"]
+
+        SLOTS -->|100 ms Evaluation Tick| ALARM_TASK["Industrial Alarm Engine (fs_alarm)\n- Hysteresis Comparison (Upper / Lower)\n- Debounce Hold-Time Verification\n- Latching Logic & Sensor-Lost Watchdog"]
+        ALARM_TASK -->|Sorted Active Alarms| ALARM_Q["Priority Alarm Queue\n(INFO < CAUTION < WARNING < FAILURE)"]
+        ALARM_Q -->|Trigger Acoustic Patterns| BUZZ["Hardware Audio DAC / Speaker\n(Asynchronous Beep Task)"]
+    end
+
+    subgraph PRESENTATION ["4. Human-Machine Interface (LVGL 480x320 Landscape)"]
+        SLOTS --> DASH["Tile 0: Live Dashboard Cards\n(Values, Units, Badges & Mini-Sparklines)"]
+        ALARM_Q --> BANNER["Top Severity Alert Banner\n(Color-Coded Status Pill)"]
+        HOLT --> CHARTS["Tile 1: Telemetry Graph & Projection\n(Historical Curve + 24-Step Forecast Series)"]
+        RING_L --> CHARTS
+        INSIGHT --> VERDICT["Tile 2: Agronomic Decision Drawer\n(Actionable Verdict: 'NO IRRIGATION' / 'IRRIGATE NOW')"]
+        
+        BG["Studio Ghibli Pixel Artwork\n(ghibli_bg.c 480x320 RGB565)"] --> LCD["3.5'' TFT LCD Display Panel\n(ILI9488 Driver @ Rotation 90)"]
+        LEAF["Animated Leaf Sprite\n(leaf_sprite.c LVGL Image)"] --> LCD
+        DASH --> LCD
+        BANNER --> LCD
+        CHARTS --> LCD
+        VERDICT --> LCD
+        TOUCH["Goodix GT1151 Touch Controller\n(I2C Capacitive Touch Driver)"] -->|Swipe & Tab Gestures| PRESENTATION
+    end
 ```
-       ┌────────────────────────┐
-       │   NASA POWER API       │
-       │   (MERRA-2 / GEOS-IT)  │
-       │   Regional Soil Wetness│
-       │   7-Day Rain, Min Temp │
-       └───────────┬────────────┘
-                   │ HTTPS / JSON (~2.2 KB)
-                   ▼
-┌────────────────────────────────────────────────────────┐
-│  FIELD SHIFT EDGE STATION (Tuya T5AI / BK7258)         │
-│                                                        │
-│  ┌──────────────────┐        ┌──────────────────────┐  │
-│  │ In-Situ Sensors  │        │ Analytics Engine     │  │
-│  │ - Soil Moisture  ├───────►│ - Soil & Temp Gap    │  │
-│  │ - Air Temp / Hum │        │ - Pearson Corr (r)   │  │
-│  │ - Ambient Lux    │        │ - Irrigation Index   │  │
-│  └──────────────────┘        └──────────┬───────────┘  │
-│                                         │              │
-│  ┌──────────────────────────────────────▼───────────┐  │
-│  │ Studio Ghibli Touchscreen UI (LVGL 480x320)      │  │
-│  │ - Live Sensor Cards & Alarm Banner               │  │
-│  │ - 96-pt Sparklines & Damped Holt Forecast        │  │
-│  │ - Macro vs. Micro Agronomic Insights             │  │
-│  └──────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────┘
+
+---
+
+## 📊 Comprehensive Channel Matrix
+
+Field Shift maintains an integrated 15-channel slot table. Each channel operates autonomously with dedicated sampling intervals, validation limits, calibration transforms, and watchdog timers:
+
+| Channel Key | Category | Source / Driver | Engineering Range | Update Rate | Timeout (`lost_ms`) | Attached Rules & Functions |
+|---|---|---|---|---|---|---|
+| `soil` | **Local Edge** | ADC Analog Count (2-Pt Calibrated) | $0.0 - 100.0\,\%$ | $500\,\text{ms}$ | $10,000\,\text{ms}$ | **Rule 1001**: Soil Low ($< 30\%$, Hold $30\,\text{s}$) |
+| `airt` | **Local Edge** | GPIO Digital Probe (DHT22 / SHT3x) | $-40.0 - 80.0\,^\circ\text{C}$ | $1,000\,\text{ms}$ | $10,000\,\text{ms}$ | **Rule 1002**: Frost Risk ($< 2^\circ\text{C}$, Latching)<br>**Rule 1003**: Heat Stress ($> 35^\circ\text{C}$) |
+| `hum` | **Local Edge** | GPIO Digital Probe (DHT22 / SHT3x) | $0 - 100\,\%$ | $1,000\,\text{ms}$ | $10,000\,\text{ms}$ | Ambient relative humidity monitoring |
+| `lux` | **Local Edge** | I2C Light Sensor (BH1750 / ADC) | $0 - 120,000\,\text{lx}$ | $1,000\,\text{ms}$ | $10,000\,\text{ms}$ | Solar irradiance & day/night detection |
+| `macro` | **Regional Macro** | NASA POWER `GWETTOP` (Top 5 cm) | $0 - 100\,\%$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | Surface regional wetness benchmark |
+| `rain` | **Regional Macro** | NASA POWER `PRECTOTCORR` (Daily) | $0.0 - 200.0\,\text{mm}$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | Daily rainfall accumulation |
+| `root` | **Regional Macro** | NASA POWER `GWETROOT` (0–100 cm) | $0 - 100\,\%$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | Deep root-zone buffer coefficient |
+| `rain7` | **Regional Macro** | NASA POWER 7-Day Cumulative Sum | $0.0 - 1,000.0\,\text{mm}$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | 7-day cumulative rainfall offset |
+| `rt2m` | **Regional Macro** | NASA POWER `T2M` (2m Air Temp) | $-60.0 - 70.0\,^\circ\text{C}$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | Regional temperature baseline |
+| `rtmin` | **Regional Macro** | NASA POWER `T2M_MIN` (Min Temp) | $-60.0 - 70.0\,^\circ\text{C}$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | **Rule 3003**: Regional Frost ($< 2^\circ\text{C}$) |
+| `rh` | **Regional Macro** | NASA POWER `RH2M` (2m Humidity) | $0 - 100\,\%$ | $3\,\text{hours}$ | $86,400\,\text{s}$ | Regional relative humidity |
+| `gap` | **Derived Insight** | $\text{soil} - \text{macro}$ | $-100 - 100\,\text{pts}$ | $5,000\,\text{ms}$ | $86,400\,\text{s}$ | **Rule 3001**: Local Drier Than Region ($< -20\,\text{pts}$) |
+| `tgap` | **Derived Insight** | $\text{airt} - \text{rt2m}$ | $-60.0 - 60.0\,^\circ\text{C}$ | $5,000\,\text{ms}$ | $86,400\,\text{s}$ | Microclimate temperature anomaly |
+| `corr` | **Derived Insight** | Pearson $r$ ($\text{soil}$ vs $\text{macro}$) | $-1.00 - +1.00$ | $5,000\,\text{ms}$ | $86,400\,\text{s}$ | Environmental coupling coefficient |
+| `irr` | **Derived Insight** | Multi-Factor Agronomic Formula | $0 - 100$ | $5,000\,\text{ms}$ | $300\,\text{s}$ | **Rule 3002**: High Need ($> 50$, Hold $15\,\text{s}$) |
+
+---
+
+## 🛡️ Fault-Tolerance, Fallbacks & Edge Resilience
+
+Field Shift is designed to function reliably in harsh agricultural edge environments characterized by unstable rural Wi-Fi, fluctuating power, and physical sensor degradation.
+
+```mermaid
+flowchart LR
+    subgraph NET_RESILIENCE ["Network & Ingestion Resilience"]
+        W1["Wi-Fi Dropped / Timeout"] -->|Exponential Backoff| W2["Retry: 30s -> 60s -> ... -> 15m"]
+        W2 -->|Restore Connection| W3["Normal Refresh: 3 Hours"]
+        
+        N1["NASA Satellite Latency"] -->|Sliding 14-Day Window| N2["Scan Backwards for Valid Day"]
+        N2 -->|Found Valid Date| N3["Parse Newest Complete Record"]
+        
+        OFFLINE["Network Totally Unavailable"] -->|USE_LIVE_MACRO=0| SYNTH["Synthetic Regional Model"]
+        
+        NO_ROOT["Subsoil GWETROOT Missing"] -->|Fallback| DEF_ROOT["Assume Neutral Subsoil 30%"]
+        NO_R7["7-Day Rain Missing"] -->|Fallback| DEF_R1["Fallback to Daily Rain x Weight"]
+    end
+
+    subgraph EDGE_RESILIENCE ["Sensor & Memory Resilience"]
+        DRIFT["Sensor Physically Disconnected"] -->|Exceeds lost_ms| ALM_LOST["Raise FS_AK_LOST Alarm"]
+        ALM_LOST --> BADGE_STALE["UI Flags Channel as STALE"]
+        
+        SPIKE["ADC Glitch / Electrical Spike"] -->|Range Check| REJECT["Mark FS_Q_INVALID"]
+        REJECT --> NO_POISON["Drop from History Buffers"]
+        
+        HEAP["RAM Constraint ~168 KB Free"] -->|Q16 Fixed-Point Quantization| NO_LEAK["Zero Heap Allocations in Steady-State"]
+        
+        WILD_EXTRAP["Chaotic Forecast Trend"] -->|Damped Holt phi=0.97| SAFE_FC["Clamped Asymptotic Trajectory"]
+    end
 ```
+
+### Detailed Resilience Strategies:
+1. **Satellite Ingestion & Temporal Sliding Window**:
+   - Satellite assimilation models (NASA MERRA-2) have an inherent 2-to-3-day processing lag. The firmware uses a **14-day sliding window** (`WINDOW_DAYS = 14`), scanning backwards day-by-day from the current date until a complete, non-null meteorological record is located.
+   - The UI transparently presents the exact date of the satellite dataset (e.g. `NASA/MERRA-2: 2026-11-12`), eliminating operator confusion.
+
+2. **Network Backoff & Multi-Tier Fallback Hierarchy**:
+   - **Backoff State Machine**: When Wi-Fi drops or DNS lookup fails, retries back off exponentially starting at 30 seconds (`RETRY_MIN_MS`) up to 15 minutes (`RETRY_MAX_MS`), preventing battery/bandwidth exhaustion. On success, the task returns to a conservative 3-hour period (`OK_INTERVAL_MS`).
+   - **Subsoil Data Fallback**: If regional root-zone wetness (`GWETROOT`) is absent, the irrigation formula falls back to surface wetness with a default baseline (`REGION_DRY_PCT = 30.0%`).
+   - **Precipitation Fallback**: If 7-day cumulative rainfall is unavailable, the system falls back to 1-day rainfall (`RAIN_FULL_MM = 10.0mm`) with dampening.
+   - **Full Offline Synthetic Mode**: If live networking is disabled (`USE_LIVE_MACRO = 0`) or the field is completely offline, synthetic agronomic generators (`mock_macro`, `mock_rain`) simulate regional diurnal patterns.
+
+3. **Sensor Quality & Watchdog Engine**:
+   - **Watchdog Expiration**: If a local sensor fails to report within its `lost_ms` window, its state transitions to `FS_Q_STALE`, and an automatic `FS_AK_LOST` system alarm is broadcast.
+   - **Range Gating**: Every sample is range-checked against `min_valid` and `max_valid`. Invalid samples (`FS_Q_INVALID`) are rejected immediately, preventing ring buffer corruption.
+   - **Debounced Hysteresis**: Alarms require continuous threshold violation across a defined `hold_ms` duration (e.g., 30,000 ms for Frost Warning) before triggering, preventing noise spikes from sounding alarms.
+
+4. **Zero Steady-State Heap Allocation**:
+   - History data is quantized into 16-bit fixed-point (`q16`) integers scaled across each channel's valid range.
+   - All buffers (`FS_H_LEN = 96`), channel slots, and alarm lists are statically allocated at startup. Free system heap remains stable at ~168 KB without memory leaks or fragmentation crashes over indefinite runtime.
 
 ---
 
